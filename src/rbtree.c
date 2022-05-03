@@ -3,13 +3,13 @@
 #include <stdlib.h>
 
 /** 추가 함수 */
-static void free_node(rbtree *t, node_t * node);
-static void rbtree_rotate_left(rbtree *t, node_t *node);
-static void rbtree_rotate_right(rbtree *t, node_t *node);
-static void rbtree_insert_fixup(rbtree *t, node_t *node);
-static void rbtree_delete_fixup(rbtree *t, node_t *node);
-static node_t *tree_successor(rbtree *t, node_t *node);
-static void in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int *index);
+void free_node(rbtree *t, node_t * node);
+void rbtree_rotate_left(rbtree *t, node_t *node);
+void rbtree_rotate_right(rbtree *t, node_t *node);
+void rbtree_insert_fixup(rbtree *t, node_t *node);
+void rbtree_delete_fixup(rbtree *t, node_t *node);
+node_t *tree_successor(rbtree *t, node_t *node);
+int in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int index);
 
 rbtree *new_rbtree(void) {
     rbtree *p = (rbtree *)calloc(1, sizeof(rbtree)); // 트리 메모리 할당
@@ -25,7 +25,7 @@ rbtree *new_rbtree(void) {
     return p;
 }
 /** (추가 함수) 해당 노드와 그 이하 노드의 메모리를 반환 */
-static void free_node(rbtree *t, node_t *node) {
+void free_node(rbtree *t, node_t *node) {
   if (node == t->nil) {
     return;
   }
@@ -45,7 +45,7 @@ void delete_rbtree(rbtree *t) {
 }
 
 /** (추가 함수) 왼쪽 회전 */
-static void rbtree_rotate_left(rbtree *t, node_t *node) {
+void rbtree_rotate_left(rbtree *t, node_t *node) {
     node_t *right = node->right; // 회전 시킬 오른쪽 노드 지정
     node->right = right->left; // 회전 시킬 오른쪽 노드의 왼쪽 자식을 노드의 오른쪽으로 지정
     if (right->left != t->nil) // 회전 시킬 오른쪽 노드의 왼쪽 자식이 널노드가 아니면
@@ -67,7 +67,7 @@ static void rbtree_rotate_left(rbtree *t, node_t *node) {
     
 }
 /** (추가 함수) 오른쪽 회전 : 왼쪽 회전과 방향만 반대이고 같은 처리 */
-static void rbtree_rotate_right(rbtree *t, node_t *node) {
+void rbtree_rotate_right(rbtree *t, node_t *node) {
     node_t *left = node->left;
 	node->left = left->right;
 	if (left->right != t->nil)
@@ -89,7 +89,7 @@ static void rbtree_rotate_right(rbtree *t, node_t *node) {
 }
 
 /** (추가 함수) 노드 삽입 후 트리 보정 */
-static void rbtree_insert_fixup(rbtree *t, node_t *node) {
+void rbtree_insert_fixup(rbtree *t, node_t *node) {
 	node_t *uncle; // 노드의 부모의 형제
 
 	while (node != t->root && node->parent->color == RBTREE_RED) {  // 노드와 그 부모가 모두 적색 (특성 4 위반)
@@ -219,7 +219,7 @@ node_t *rbtree_max(const rbtree *t) {
 }
 
 /** (추가 함수) 노드의 직후 원소를 리턴 */
-static node_t *tree_successor(rbtree *t, node_t *node) {
+node_t *tree_successor(rbtree *t, node_t *node) {
     // 해당 노드의 오른쪽 자식이 있으면
     node_t *result;
     if (node->right != t->nil) {
@@ -241,7 +241,7 @@ static node_t *tree_successor(rbtree *t, node_t *node) {
 }
 
 /** (추가 함수) 노드 삭제 후 트리 보정 */
-static void rbtree_delete_fixup(rbtree *t, node_t *node){
+void rbtree_delete_fixup(rbtree *t, node_t *node){
     while (node != t->root && node->color == RBTREE_BLACK) {    // 루트가 아닌 이중 흑색
         // 형제는 경계 노드(nil)일 수 없음 (node가 흑색이라 형제가 nil이면 흑색 노드의 갯수가 달라지기 때문)
         node_t *sibling;
@@ -340,23 +340,21 @@ int rbtree_erase(rbtree *t, node_t *p) {
 }
 
 /** (추가 함수) 중위 순회해서 배열에 저장 */
-static void in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int *index) {
-    if (root == nil) return;
-    if (*index >= n) return;
+int in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int index) {
+    if (root == nil || index > n) return index;
 
-    in_order(root->left, nil, arr, n, index);
-    arr[*index] = root->key;
-    (*index)++;
-    in_order(root->right, nil, arr, n, index);
+    index = in_order(root->left, nil, arr, n, index);
+    if (index < n) {
+        arr[index++] = root->key;
+    }
+    index = in_order(root->right, nil, arr, n, index);
+    return index;
 }
 
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n) {
   // TODO: implement to_array
   // 중위 순회
-  int *index;
-  int start = 0;
-  index = &start;
-  in_order(t->root, t->nil, arr, n, index);
+  in_order(t->root, t->nil, arr, n, 0);
 
   return 0;
 }
