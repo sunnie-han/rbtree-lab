@@ -342,7 +342,7 @@ int rbtree_erase(rbtree *t, node_t *p) {
 /** (추가 함수) 중위 순회해서 배열에 저장 */
 static void in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int *index) {
     if (root == nil) return;
-    if (*index == n) return;
+    if (*index >= n) return;
 
     in_order(root->left, nil, arr, n, index);
     arr[*index] = root->key;
