@@ -7,6 +7,7 @@ void free_node(rbtree *t, node_t * node);
 void rbtree_rotate_left(rbtree *t, node_t *node);
 void rbtree_rotate_right(rbtree *t, node_t *node);
 void rbtree_insert_fixup(rbtree *t, node_t *node);
+node_t *rbtree_min_from(const rbtree *t, node_t *node);
 void rbtree_delete_fixup(rbtree *t, node_t *node);
 node_t *tree_successor(rbtree *t, node_t *node);
 int in_order(node_t *root, node_t *nil, key_t *arr, const size_t n, int index);
@@ -24,6 +25,7 @@ rbtree *new_rbtree(void) {
 
     return p;
 }
+
 /** (추가 함수) 해당 노드와 그 이하 노드의 메모리를 반환 */
 void free_node(rbtree *t, node_t *node) {
   if (node == t->nil) {
@@ -66,6 +68,7 @@ void rbtree_rotate_left(rbtree *t, node_t *node) {
 	node->parent = right; // 현노드의 부모로 오른쪽 노드를 지정
     
 }
+
 /** (추가 함수) 오른쪽 회전 : 왼쪽 회전과 방향만 반대이고 같은 처리 */
 void rbtree_rotate_right(rbtree *t, node_t *node) {
     node_t *left = node->left;
@@ -197,15 +200,21 @@ node_t *rbtree_find(const rbtree *t, const key_t key) {
         return node;
     }
 }
+/** (추가 함수) 지정한 노드를 루트로 하는 트리의 최솟값을 리턴 */
+node_t *rbtree_min_from(const rbtree *t, node_t *node) {
+    // TODO: implement find
+    // 제일 왼쪽 끝의 노드를 반환
+    node_t *result = node; // 지정한 노드부터 탐색
+    while (result->left != t->nil) {
+        result = result->left;
+    }
+    return result;
+}
 
 node_t *rbtree_min(const rbtree *t) {
     // TODO: implement find
-    // 제일 왼쪽 끝의 노드를 반환
-    node_t *node = t->root; // 루트부터 탐색
-    while (node->left != t->nil) {
-        node = node->left;
-    }
-    return node;
+    // 트리의 루트에서 최소값을 탐색
+    return rbtree_min_from(t, t->root);
 }
 
 node_t *rbtree_max(const rbtree *t) {
@@ -223,14 +232,10 @@ node_t *tree_successor(rbtree *t, node_t *node) {
     // 해당 노드의 오른쪽 자식이 있으면
     node_t *result;
     if (node->right != t->nil) {
-        // tree-minimum(x) => 노드 x를 루트로 하는 트리의 최솟값을 리턴
-        result = node->right;           // 오른쪽 트리의 루트부터 탐색
-        while (result->left != t->nil) {
-            result = result->left;
-        }
-        return result;
+        // 노드의 오른쪽 트리에서 최솟값을 리턴
+        return rbtree_min_from(t, node->right);
     }
-    // 해당 노드의 오른쪽 자식이 없으면
+    // 해당 노드의 오른쪽 자식이 없으면 (erase에서 이 이하는 쓰이지 않음)
     result = node->parent;              // 해당노드보다 커지는 부모 노드(*자기자신도 조상으로 간주)를 탐색
     // 노드가 부모노드의 왼쪽자식이 되는 순간의 부모노드가 직후 노드
     while (result != t->nil && node == result->right) {
@@ -312,7 +317,7 @@ int rbtree_erase(rbtree *t, node_t *p) {
     } else {                    // 그 외의 경우
         x = y->right;
     }
-    x->parent = y->parent;      // y의 부모를 y의 자식(x)의 부모로 연결 (?)x가 nil일 때 nil의 부모를 y이 부모로 되는데 문제없나? => nil의 부모는 쓸일 없으니까 무관?
+    x->parent = y->parent;      // y의 부모를 y의 자식(x)의 부모로 연결
 
     if (y->parent == t->nil) {  // y가 루트인 경우
         t->root = x;            // x를 트리의 루트로 설정
